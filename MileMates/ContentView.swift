@@ -2,7 +2,7 @@
 //  ContentView.swift
 //  MileMates
 //
-//  Created by QueenTesa Fuggett on 12/9/25.
+//  Created by 31-third team on 12/9/25.
 //
 
 import SwiftUI

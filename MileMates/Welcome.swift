@@ -2,13 +2,14 @@
 //  Welcome.swift
 //  MileMates
 //
-//  Created by QueenTesa Fuggett on 12/9/25.
+//  Created by the 31-third team on 12/9/25.
 //
 
 import SwiftUI
 import SwiftUIGIF
 
 struct Welcome: View {
+    @StateObject private var tracker = LocationTracker()
     @State private var imageData: Data? = nil
     @State private var isDone = false
 
@@ -26,27 +27,60 @@ struct Welcome: View {
               }
             }
             HStack{
-                Image("start")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 150, height: 150)
-                    .offset(x: -20, y:-250)
-                Image("stop")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 150, height: 150)
-                    .offset(x: 20, y:-250)
+                Button {
+                    tracker.startTracking()
+                } label: {
+                    Image("start")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 150, height: 150)
+                }
+                .offset(x: -20, y: -250)
+                .buttonStyle(.plain)
+                Button {
+                    tracker.stopTracking()
+                } label: {
+                    Image("stop")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 150, height: 150)
+                }
+                .offset(x: 20, y: -250)
+                .buttonStyle(.plain)
             }
             Rectangle()
                 .border(Color.white, width: 2)
-                .frame(width: 200, height: 50)
+                .frame(width: 200, height: 60)
                 .offset(y:-40)
-            Image("stopLines")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 75, height: 75)
-                .offset(y:250)
-            
+            Button {
+                tracker.pauseTracking()
+            } label: {
+                Image("stopLines")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 75, height: 75)
+            }
+            .offset(y: 250)
+            .buttonStyle(.plain)
+            VStack {
+                Spacer()
+
+                Button(action: {
+                    // navigate to activities list
+                }) {
+                    Label("All Activities", systemImage: "list")
+                        .font(.system(size: 18, weight: .semibold))
+                        .padding(.horizontal, 32)
+                        .padding(.vertical, 12)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .clipShape(Capsule())
+                }
+                .padding(.bottom, 33)
+            }
+            .onAppear {
+                tracker.requestAuthorization()
+            }
         }
       }
       

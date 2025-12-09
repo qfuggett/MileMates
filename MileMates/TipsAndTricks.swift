@@ -2,7 +2,7 @@
 //  Welcome.swift
 //  MileMates
 //
-//  Created by QueenTesa Fuggett on 12/9/25.
+//  Created by 31-third team on 12/9/25.
 //
 
 import SwiftUI
@@ -46,6 +46,26 @@ struct TipsAndTricks: View {
             Image(systemName: "info.circle")
                 .foregroundStyle(.white)
                 .offset(x: 170, y:-320)
+            Rectangle()
+                .frame(width: 300, height: 150)
+                .offset(y:-20)
+                .foregroundColor(Color.gray)
+            VStack {
+                Spacer()
+
+                Button(action: {
+                    // navigate to activities list
+                }) {
+                    Label("Home", systemImage: "list")
+                        .font(.system(size: 18, weight: .semibold))
+                        .padding(.horizontal, 32)
+                        .padding(.vertical, 12)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .clipShape(Capsule())
+                }
+                .padding(.bottom, 33)
+            }
           }
             
         }
