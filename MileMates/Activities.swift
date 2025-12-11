@@ -9,31 +9,19 @@ import SwiftUI
 import SwiftUIGIF
 
 struct Activities: View {
-    @State private var imageData: Data? = nil
-    @State private var isDone = false
+    @State private var testActivities: [String] = ["Test1", "Test2", "Test3", "Test4"]
+    @State private var activities = ""
+
 
     var body: some View {
         ZStack{
-            VStack {
-              if let data = imageData {
-                GIFImage(data: data) {
-                    isDone = true
-                  }
-                  .frame(width: 400)
-                } else {
-                Text("Loading...")
-                  .onAppear(perform: loadData)
-              }
+            VStack{
+                List{
+                    ForEach(testActivities, id: \.description) { activity in Text(activity) }
+                }
             }
         }
-        
-      }
-      
-      private func loadData() {
-        let task = URLSession.shared.dataTask(with: URL(string: "https://github.com/qfuggett/MileMates/blob/main/poleposition-2.gif?raw=true")!) { data, response, error in
-          imageData = data
-        }
-        task.resume()
+        .padding()
       }
 }
 
