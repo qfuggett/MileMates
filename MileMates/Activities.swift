@@ -9,15 +9,14 @@ import SwiftUI
 import SwiftUIGIF
 
 struct Activities: View {
-    @State private var testActivities: [String] = ["Test1", "Test2", "Test3", "Test4"]
-    @State private var activities = ""
+    @State private var activities: [String] = ["Michigan Central Station:  20 miles", "Grand Rapids:  200 miles", "Anna Scripps Observatory:  8 miles", "Campus Martius Park:  10 miles", "Eastern Market:  3 miles"]
 
 
     var body: some View {
         ZStack{
             VStack{
                 List{
-                    ForEach(testActivities, id: \.description) { activity in Text(activity) }
+                    ForEach(activities, id: \.description) { activity in Text(activity) }
                 }
             }
         }

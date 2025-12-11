@@ -22,8 +22,13 @@ struct TipsAndTricks: View {
                   .frame(width: 400)
                 } else {
                 Text("Loading...")
-                  .onAppear(perform: loadData)
               }
+            }
+            .onAppear {
+                // Load GIF from Asset Catalog
+                if let gifData = NSDataAsset(name: "poleposition")?.data {
+                    imageData = gifData
+                }
             }
             Image("bigCloud")
                 .resizable()
@@ -46,10 +51,33 @@ struct TipsAndTricks: View {
             Image(systemName: "info.circle")
                 .foregroundStyle(.white)
                 .offset(x: 170, y:-320)
-            Rectangle()
-                .frame(width: 300, height: 150)
-                .offset(y:-20)
-                .foregroundColor(Color.gray)
+            ZStack {
+                VStack{
+                    Rectangle()
+                        .frame(width: 250, height: 100)
+                        .foregroundColor(Color.white.opacity(0.9))
+                    Rectangle()
+                        .frame(width: 300, height: 150)
+                        .foregroundColor(Color.white.opacity(0.9))
+                }
+                Text("Did you know? \n\nYou have two options for calculating the deduction: the Standard Mileage method and the Actual Expense Method.")
+                    .font(.system(size: 16))
+                    .bold()
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.black)
+                    .padding(.horizontal, 20)
+                    .frame(width: 300)
+                    .offset(y: 50)
+                Text("Done! \n\nData sent successfully.")
+                    .font(.system(size: 16))
+                    .bold()
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.black)
+                    .padding(.horizontal, 20)
+                    .frame(width: 300)
+                    .offset(y: -90)
+            }
+            .offset(y: -80)
             VStack {
                 Spacer()
 
@@ -71,12 +99,12 @@ struct TipsAndTricks: View {
         }
         
       
-      private func loadData() {
-        let task = URLSession.shared.dataTask(with: URL(string: "https://github.com/qfuggett/MileMates/blob/main/poleposition-2.gif?raw=true")!) { data, response, error in
-          imageData = data
-        }
-        task.resume()
-      }
+//      private func loadData() {
+//        let task = URLSession.shared.dataTask(with: URL(string: "https://github.com/qfuggett/MileMates/blob/main/poleposition-2.gif?raw=true")!) { data, response, error in
+//          imageData = data
+//        }
+//        task.resume()
+//      }
 }
 
 #Preview {
