@@ -62,6 +62,10 @@ struct Welcome: View {
                     .scaledToFit()
                     .frame(width: 75, height: 75)
                     .offset(y: 250)
+                Text("Last Trip:  3 miles")
+                    .font(.system(size: 20, weight: .semibold))
+                    .offset(y: -40)
+                    .foregroundStyle(Color.white)
                 VStack {
                     Spacer()
 

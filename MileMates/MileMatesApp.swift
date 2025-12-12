@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import CoreData
+import SwiftData
 
 @main
 struct MileMatesApp: App {
@@ -14,8 +14,10 @@ struct MileMatesApp: App {
 
     var body: some Scene {
         WindowGroup {
-            Welcome()
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            NavigationStack{
+                Welcome()
+            }
         }
+        .modelContainer(for: Activity.self)
     }
 }

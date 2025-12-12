@@ -11,6 +11,8 @@ import SwiftUIGIF
 struct TipsAndTricks: View {
     @State private var imageData: Data? = nil
     @State private var isDone = false
+    // Controls whether the success popup is visible
+    @State private var showSuccessPopup = false
 
     var body: some View {
         ZStack{
@@ -28,6 +30,11 @@ struct TipsAndTricks: View {
                 // Load GIF from Asset Catalog
                 if let gifData = NSDataAsset(name: "poleposition")?.data {
                     imageData = gifData
+                }
+                // Simulate data being sent successfully
+                // TODO: Replace this with real send / export logic later
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    showSuccessPopup = true
                 }
             }
             Image("bigCloud")
@@ -54,9 +61,6 @@ struct TipsAndTricks: View {
             ZStack {
                 VStack{
                     Rectangle()
-                        .frame(width: 250, height: 100)
-                        .foregroundColor(Color.white.opacity(0.9))
-                    Rectangle()
                         .frame(width: 300, height: 150)
                         .foregroundColor(Color.white.opacity(0.9))
                 }
@@ -67,23 +71,13 @@ struct TipsAndTricks: View {
                     .foregroundColor(.black)
                     .padding(.horizontal, 20)
                     .frame(width: 300)
-                    .offset(y: 50)
-                Text("Done! \n\nData sent successfully.")
-                    .font(.system(size: 16))
-                    .bold()
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.black)
-                    .padding(.horizontal, 20)
-                    .frame(width: 300)
-                    .offset(y: -90)
+                    .offset(y: 0)
             }
             .offset(y: -80)
             VStack {
                 Spacer()
 
-                Button(action: {
-                    // navigate to activities list
-                }) {
+                NavigationLink(destination: Welcome()) {
                     Label("Home", systemImage: "list")
                         .font(.system(size: 18, weight: .semibold))
                         .padding(.horizontal, 32)
@@ -93,6 +87,38 @@ struct TipsAndTricks: View {
                         .clipShape(Capsule())
                 }
                 .padding(.bottom, 33)
+            }
+            // Success popup overlay
+            if showSuccessPopup {
+                ZStack {
+                    // Dimmed background
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+
+                    // Popup card
+                    VStack(spacing: 16) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 48))
+                            .foregroundColor(.green)
+
+                        Text("Data Sent Successfully")
+                            .font(.headline)
+                            .foregroundColor(.black)
+
+                        Button("OK") {
+                            showSuccessPopup = false
+                        }
+                        .padding(.horizontal, 32)
+                        .padding(.vertical, 10)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .clipShape(Capsule())
+                    }
+                    .padding(24)
+                    .background(Color.white)
+                    .cornerRadius(16)
+                    .shadow(radius: 20)
+                }
             }
           }
             
