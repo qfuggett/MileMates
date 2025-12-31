@@ -96,7 +96,7 @@ struct Welcome: View {
                     Spacer()
 
                     NavigationLink(destination: Activities()) {
-                        Label("All Activities", systemImage: "list")
+                        Label("All Activities", systemImage: "list.bullet")
                             .font(.system(size: 18, weight: .semibold))
                             .padding(.horizontal, 32)
                             .padding(.vertical, 12)

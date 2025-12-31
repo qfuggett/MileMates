@@ -31,7 +31,7 @@ struct DataSendPage: View {
                 Button(action: {
                     // navigate to activities list
                 }) {
-                    Label("Send Activities", systemImage: "list")
+                    Label("Send Activities", systemImage: "list.bullet")
                         .font(.system(size: 18, weight: .semibold))
                         .padding(.horizontal, 32)
                         .padding(.vertical, 12)

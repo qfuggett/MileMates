@@ -10,8 +10,6 @@ import SwiftData
 
 @main
 struct MileMatesApp: App {
-    let persistenceController = PersistenceController.shared
-
     var body: some Scene {
         WindowGroup {
             NavigationStack{
