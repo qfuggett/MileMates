@@ -16,7 +16,6 @@ struct Welcome: View {
     @Query(sort: \Activity.date, order: .reverse) private var activities: [Activity]
     
     @State private var imageData: Data? = nil
-    @State private var isDone = false
     @State private var showActivityNameAlert = false
     @State private var activityName = ""
     @State private var showLocationPermissionAlert = false
@@ -37,28 +36,11 @@ struct Welcome: View {
     var body: some View {
         NavigationStack {
             ZStack{
-                ZStack {
-                    if let data = imageData {
-                        GIFImage(data: data) {
-                            isDone = true
-                        }
+                if let data = imageData {
+                    GIFImage(data: data)
                         .ignoresSafeArea()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else {
-                        Color.black.ignoresSafeArea()
-                        Text("Loading...")
-                            .foregroundColor(.white)
-                    }
-                }
-                .onAppear {
-                    // Load GIF from Asset Catalog
-                    if let gifData = NSDataAsset(name: "poleposition")?.data {
-                        imageData = gifData
-                    }
-                    // Update last trip distance from most recent activity
-                    if let lastActivity = activities.first {
-                        lastTripDistance = lastActivity.miles
-                    }
+                } else {
+                    Color.black.ignoresSafeArea()
                 }
                 HStack{
                     Button{
@@ -105,6 +87,17 @@ struct Welcome: View {
                             .clipShape(Capsule())
                     }
                     .padding(.bottom, 33)
+                }
+            }
+            .onAppear {
+                if imageData == nil {
+                    if let gifData = NSDataAsset(name: "poleposition")?.data {
+                        imageData = gifData
+                    }
+                }
+                // Update last trip distance from most recent activity
+                if let lastActivity = activities.first {
+                    lastTripDistance = lastActivity.miles
                 }
             }
             .alert("Enter Activity Name", isPresented: $showActivityNameAlert) {
