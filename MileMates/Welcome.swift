@@ -37,15 +37,18 @@ struct Welcome: View {
     var body: some View {
         NavigationStack {
             ZStack{
-                VStack {
-                  if let data = imageData {
-                    GIFImage(data: data) {
-                        isDone = true
-                      }
-                      .frame(width: 400)
+                ZStack {
+                    if let data = imageData {
+                        GIFImage(data: data) {
+                            isDone = true
+                        }
+                        .ignoresSafeArea()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
-                    Text("Loading...")
-                  }
+                        Color.black.ignoresSafeArea()
+                        Text("Loading...")
+                            .foregroundColor(.white)
+                    }
                 }
                 .onAppear {
                     // Load GIF from Asset Catalog
@@ -125,24 +128,51 @@ struct Welcome: View {
             } message: {
                 Text("Please enable location services in Settings to track your mileage.")
             }
+            .onChange(of: locationTracker.authorizationStatus) { oldValue, newValue in
+                // When authorization status changes, check if we should show the activity name alert
+                if newValue == .authorizedWhenInUse || newValue == .authorizedAlways {
+                    // Only show if we were waiting for authorization
+                    if oldValue == .notDetermined {
+                        showActivityNameAlert = true
+                    }
+                } else if newValue == .denied || newValue == .restricted {
+                    if oldValue == .notDetermined {
+                        showLocationPermissionAlert = true
+                    }
+                }
+            }
         }
     }
     
     private func handleStartButton() {
         // Check location authorization
-        if locationTracker.authorizationStatus == .notDetermined {
+        let currentStatus = locationTracker.authorizationStatus
+        
+        if currentStatus == .notDetermined {
+            // Request authorization and wait for the delegate callback
             locationTracker.requestAuthorization()
-            // Use a timer to check authorization status after a brief delay
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            // The authorization status will be updated via the delegate callback
+            // We'll check it after a short delay to allow the system dialog to appear
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                // Check again after the system might have updated the status
                 if locationTracker.authorizationStatus == .authorizedWhenInUse || locationTracker.authorizationStatus == .authorizedAlways {
                     showActivityNameAlert = true
                 } else if locationTracker.authorizationStatus == .denied || locationTracker.authorizationStatus == .restricted {
                     showLocationPermissionAlert = true
+                } else {
+                    // Still not determined, wait a bit more for the system dialog
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        if locationTracker.authorizationStatus == .authorizedWhenInUse || locationTracker.authorizationStatus == .authorizedAlways {
+                            showActivityNameAlert = true
+                        } else if locationTracker.authorizationStatus == .denied || locationTracker.authorizationStatus == .restricted {
+                            showLocationPermissionAlert = true
+                        }
+                    }
                 }
             }
-        } else if locationTracker.authorizationStatus == .denied || locationTracker.authorizationStatus == .restricted {
+        } else if currentStatus == .denied || currentStatus == .restricted {
             showLocationPermissionAlert = true
-        } else if locationTracker.authorizationStatus == .authorizedWhenInUse || locationTracker.authorizationStatus == .authorizedAlways {
+        } else if currentStatus == .authorizedWhenInUse || currentStatus == .authorizedAlways {
             showActivityNameAlert = true
         }
     }

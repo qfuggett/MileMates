@@ -61,7 +61,9 @@ class LocationTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        authorizationStatus = manager.authorizationStatus
+        DispatchQueue.main.async {
+            self.authorizationStatus = manager.authorizationStatus
+        }
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {

@@ -69,12 +69,17 @@ struct Activities: View {
         }
         .sheet(isPresented: $showShareSheet, onDismiss: {
             // Show success alert after share sheet is dismissed
-            showSuccessAlert = true
+            if pdfURL != nil {
+                showSuccessAlert = true
+            }
         }) {
             if let pdfURL = pdfURL {
                 ShareSheet(activityItems: [pdfURL], onComplete: {
                     showShareSheet = false
                 })
+            } else {
+                Text("Error generating PDF")
+                    .padding()
             }
         }
         .alert("Data Sent Successfully", isPresented: $showSuccessAlert) {
@@ -84,15 +89,17 @@ struct Activities: View {
         } message: {
             Text("Your activities have been exported successfully.")
         }
-        .background(
-            NavigationLink(destination: TipsAndTricks(), isActive: $navigateToTips) {
-                EmptyView()
-            }
-            .hidden()
-        )
+        .navigationDestination(isPresented: $navigateToTips) {
+            TipsAndTricks()
+        }
     }
     
     private func generateAndSharePDF() {
+        guard !activities.isEmpty else {
+            // Show alert if no activities
+            return
+        }
+        
         let pdfMetaData = [
             kCGPDFContextCreator: "MileMates",
             kCGPDFContextAuthor: "MileMates App",
@@ -202,10 +209,15 @@ struct Activities: View {
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("MileageActivities.pdf")
         do {
             try data.write(to: tempURL)
-            pdfURL = tempURL
-            showShareSheet = true
+            DispatchQueue.main.async {
+                self.pdfURL = tempURL
+                self.showShareSheet = true
+            }
         } catch {
             print("Failed to save PDF: \(error)")
+            DispatchQueue.main.async {
+                self.showShareSheet = false
+            }
         }
     }
 }
@@ -216,8 +228,18 @@ struct ShareSheet: UIViewControllerRepresentable {
     
     func makeUIViewController(context: Context) -> UIActivityViewController {
         let controller = UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
-        controller.completionWithItemsHandler = { _, _, _, _ in
-            onComplete()
+        
+        // Configure for iPad
+        if let popover = controller.popoverPresentationController {
+            popover.sourceView = UIView()
+            popover.sourceRect = CGRect(x: UIScreen.main.bounds.width / 2, y: UIScreen.main.bounds.height / 2, width: 0, height: 0)
+            popover.permittedArrowDirections = []
+        }
+        
+        controller.completionWithItemsHandler = { activityType, completed, returnedItems, error in
+            if completed || activityType == nil {
+                onComplete()
+            }
         }
         return controller
     }
