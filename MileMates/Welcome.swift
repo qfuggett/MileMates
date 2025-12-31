@@ -36,8 +36,9 @@ struct Welcome: View {
     var body: some View {
         NavigationStack {
             ZStack{
-                if let data = imageData {
+                if let data = imageData, !data.isEmpty {
                     GIFImage(data: data)
+                        .id(data.hashValue) // Force re-render when data exists
                         .ignoresSafeArea()
                 } else {
                     Color.black.ignoresSafeArea()
@@ -90,6 +91,7 @@ struct Welcome: View {
                 }
             }
             .onAppear {
+                // Load GIF if not already loaded
                 if imageData == nil {
                     if let gifData = NSDataAsset(name: "poleposition")?.data {
                         imageData = gifData
