@@ -7,10 +7,31 @@
 
 import SwiftUI
 import SwiftUIGIF
+import SwiftData
 
 struct Welcome: View {
+    @StateObject private var locationTracker = LocationTracker()
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \Activity.date, order: .reverse) private var activities: [Activity]
+    
     @State private var imageData: Data? = nil
     @State private var isDone = false
+    @State private var showActivityNameAlert = false
+    @State private var activityName = ""
+    @State private var showLocationPermissionAlert = false
+    @State private var lastTripDistance: Double = 0
+    
+    private var currentDistanceInMiles: Double {
+        locationTracker.totalDistance / 1609.34 // Convert meters to miles
+    }
+    
+    private var displayDistance: Double {
+        if locationTracker.isTracking {
+            return currentDistanceInMiles
+        } else {
+            return lastTripDistance
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -30,10 +51,14 @@ struct Welcome: View {
                     if let gifData = NSDataAsset(name: "poleposition")?.data {
                         imageData = gifData
                     }
+                    // Update last trip distance from most recent activity
+                    if let lastActivity = activities.first {
+                        lastTripDistance = lastActivity.miles
+                    }
                 }
                 HStack{
                     Button{
-                        // add logic to enter starting odometer
+                        handleStartButton()
                     }label: {
                         Image("start")
                             .resizable()
@@ -42,8 +67,9 @@ struct Welcome: View {
                             .offset(x: -20, y: -250)
                     }
                     .buttonStyle(.plain)
+                    .disabled(locationTracker.isTracking)
                     Button{
-                        // add logic to enter ending odometer
+                        handleStopButton()
                     }label: {
                         Image("stop")
                             .resizable()
@@ -52,6 +78,7 @@ struct Welcome: View {
                             .offset(x: 20, y: -250)
                     }
                     .buttonStyle(.plain)
+                    .disabled(!locationTracker.isTracking)
                 }
                 Rectangle()
                     .border(Color.white, width: 2)
@@ -62,7 +89,7 @@ struct Welcome: View {
                     .scaledToFit()
                     .frame(width: 75, height: 75)
                     .offset(y: 250)
-                Text("Last Trip:  3 miles")
+                Text("Last Trip: \(String(format: "%.2f", displayDistance)) miles")
                     .font(.system(size: 20, weight: .semibold))
                     .offset(y: -40)
                     .foregroundStyle(Color.white)
@@ -81,15 +108,78 @@ struct Welcome: View {
                     .padding(.bottom, 33)
                 }
             }
+            .alert("Enter Activity Name", isPresented: $showActivityNameAlert) {
+                TextField("Activity name", text: $activityName)
+                Button("Cancel", role: .cancel) {
+                    activityName = ""
+                }
+                Button("Start") {
+                    startTracking()
+                }
+            } message: {
+                Text("Please enter a name for this activity.")
+            }
+            .alert("Location Permission Required", isPresented: $showLocationPermissionAlert) {
+                Button("Settings") {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Please enable location services in Settings to track your mileage.")
+            }
         }
-      }
-      
-//      private func loadData() {
-//        let task = URLSession.shared.dataTask(with: URL(string: "https://github.com/qfuggett/MileMates/blob/main/poleposition-2.gif?raw=true")!) { data, response, error in
-//          imageData = data
-//        }
-//        task.resume()
-//      }
+    }
+    
+    private func handleStartButton() {
+        // Check location authorization
+        if locationTracker.authorizationStatus == .notDetermined {
+            locationTracker.requestAuthorization()
+            // Use a timer to check authorization status after a brief delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                if locationTracker.authorizationStatus == .authorizedWhenInUse || locationTracker.authorizationStatus == .authorizedAlways {
+                    showActivityNameAlert = true
+                } else if locationTracker.authorizationStatus == .denied || locationTracker.authorizationStatus == .restricted {
+                    showLocationPermissionAlert = true
+                }
+            }
+        } else if locationTracker.authorizationStatus == .denied || locationTracker.authorizationStatus == .restricted {
+            showLocationPermissionAlert = true
+        } else if locationTracker.authorizationStatus == .authorizedWhenInUse || locationTracker.authorizationStatus == .authorizedAlways {
+            showActivityNameAlert = true
+        }
+    }
+    
+    private func startTracking() {
+        guard !activityName.isEmpty else { return }
+        locationTracker.startTracking()
+    }
+    
+    private func handleStopButton() {
+        guard locationTracker.isTracking else { return }
+        
+        // Get distance before stopping
+        let distanceInMiles = currentDistanceInMiles
+        let duration = locationTracker.stopTracking()
+        
+        // Save the activity
+        let activity = Activity(
+            name: activityName,
+            miles: distanceInMiles,
+            duration: duration ?? 0,
+            date: Date()
+        )
+        modelContext.insert(activity)
+        
+        do {
+            try modelContext.save()
+            lastTripDistance = distanceInMiles
+            activityName = ""
+        } catch {
+            print("Failed to save activity: \(error)")
+        }
+    }
 }
 
 #Preview {

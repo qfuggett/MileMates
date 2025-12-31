@@ -8,11 +8,16 @@
 import SwiftUI
 import SwiftData
 import SwiftUIGIF
+import PDFKit
 
 struct Activities: View {
     @State private var imageData: Data? = nil
     @State private var isDone = false
-    @Query(sort: \Activity.name) private var activities: [Activity]
+    @State private var showSuccessAlert = false
+    @State private var showShareSheet = false
+    @State private var navigateToTips = false
+    @State private var pdfURL: URL?
+    @Query(sort: \Activity.date, order: .reverse) private var activities: [Activity]
     @Environment(\.modelContext) private var context
 
     var body: some View {
@@ -28,7 +33,7 @@ struct Activities: View {
                     HStack {
                         Text(activity.name)
                         Spacer()
-                        Text("\(activity.miles, specifier: "%.1f") mi")
+                        Text("\(activity.miles, specifier: "%.2f") mi")
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -36,21 +41,14 @@ struct Activities: View {
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
             .background(Color.clear)
-            .navigationTitle("")
-            .task {
-                if activities.isEmpty {
-                    context.insert(Activity(name: "Michigan Central Station", miles: 20))
-                    context.insert(Activity(name: "Grand Rapids", miles: 160))
-                    context.insert(Activity(name: "Anna Scripps Observatory", miles: 8))
-                    context.insert(Activity(name: "Campus Martius Park", miles: 5))
-                    context.insert(Activity(name: "Eastern Market", miles: 3))
-                }
-            }
+            .navigationTitle("All Activities")
 
             VStack {
                 Spacer()
 
-                NavigationLink(destination: TipsAndTricks()) {
+                Button(action: {
+                    generateAndSharePDF()
+                }) {
                     Label("Send All", systemImage: "paperplane")
                         .font(.system(size: 18, weight: .semibold))
                         .padding(.horizontal, 24)
@@ -69,7 +67,162 @@ struct Activities: View {
                 }
             }
         }
+        .sheet(isPresented: $showShareSheet, onDismiss: {
+            // Show success alert after share sheet is dismissed
+            showSuccessAlert = true
+        }) {
+            if let pdfURL = pdfURL {
+                ShareSheet(activityItems: [pdfURL], onComplete: {
+                    showShareSheet = false
+                })
+            }
+        }
+        .alert("Data Sent Successfully", isPresented: $showSuccessAlert) {
+            Button("OK") {
+                navigateToTips = true
+            }
+        } message: {
+            Text("Your activities have been exported successfully.")
+        }
+        .background(
+            NavigationLink(destination: TipsAndTricks(), isActive: $navigateToTips) {
+                EmptyView()
+            }
+            .hidden()
+        )
     }
+    
+    private func generateAndSharePDF() {
+        let pdfMetaData = [
+            kCGPDFContextCreator: "MileMates",
+            kCGPDFContextAuthor: "MileMates App",
+            kCGPDFContextTitle: "Mileage Activities"
+        ]
+        let format = UIGraphicsPDFRendererFormat()
+        format.documentInfo = pdfMetaData as [String: Any]
+        
+        let pageWidth = 8.5 * 72.0
+        let pageHeight = 11 * 72.0
+        let pageRect = CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight)
+        
+        let renderer = UIGraphicsPDFRenderer(bounds: pageRect, format: format)
+        
+        let data = renderer.pdfData { context in
+            context.beginPage()
+            
+            let titleFont = UIFont.boldSystemFont(ofSize: 24)
+            let headerFont = UIFont.boldSystemFont(ofSize: 16)
+            let bodyFont = UIFont.systemFont(ofSize: 14)
+            
+            var yPosition: CGFloat = 72
+            
+            // Title
+            let title = "Mileage Activities Report"
+            let titleAttributes: [NSAttributedString.Key: Any] = [
+                .font: titleFont,
+                .foregroundColor: UIColor.black
+            ]
+            let titleSize = title.size(withAttributes: titleAttributes)
+            title.draw(at: CGPoint(x: (pageWidth - titleSize.width) / 2, y: yPosition), withAttributes: titleAttributes)
+            yPosition += titleSize.height + 20
+            
+            // Date
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateStyle = .long
+            dateFormatter.timeStyle = .none
+            let dateString = "Generated: \(dateFormatter.string(from: Date()))"
+            let dateAttributes: [NSAttributedString.Key: Any] = [
+                .font: bodyFont,
+                .foregroundColor: UIColor.gray
+            ]
+            dateString.draw(at: CGPoint(x: 72, y: yPosition), withAttributes: dateAttributes)
+            yPosition += 30
+            
+            // Headers
+            let nameHeader = "Activity Name"
+            let distanceHeader = "Distance (miles)"
+            let headerAttributes: [NSAttributedString.Key: Any] = [
+                .font: headerFont,
+                .foregroundColor: UIColor.black
+            ]
+            nameHeader.draw(at: CGPoint(x: 72, y: yPosition), withAttributes: headerAttributes)
+            distanceHeader.draw(at: CGPoint(x: pageWidth - 200, y: yPosition), withAttributes: headerAttributes)
+            yPosition += 25
+            
+            // Draw line
+            context.cgContext.setStrokeColor(UIColor.lightGray.cgColor)
+            context.cgContext.setLineWidth(1.0)
+            context.cgContext.move(to: CGPoint(x: 72, y: yPosition))
+            context.cgContext.addLine(to: CGPoint(x: pageWidth - 72, y: yPosition))
+            context.cgContext.strokePath()
+            yPosition += 15
+            
+            // Activities
+            var totalMiles: Double = 0
+            for activity in activities {
+                if yPosition > pageHeight - 100 {
+                    context.beginPage()
+                    yPosition = 72
+                }
+                
+                let nameAttributes: [NSAttributedString.Key: Any] = [
+                    .font: bodyFont,
+                    .foregroundColor: UIColor.black
+                ]
+                activity.name.draw(at: CGPoint(x: 72, y: yPosition), withAttributes: nameAttributes)
+                
+                let distanceText = String(format: "%.2f", activity.miles)
+                let distanceAttributes: [NSAttributedString.Key: Any] = [
+                    .font: bodyFont,
+                    .foregroundColor: UIColor.black
+                ]
+                let distanceSize = distanceText.size(withAttributes: distanceAttributes)
+                distanceText.draw(at: CGPoint(x: pageWidth - 200, y: yPosition), withAttributes: distanceAttributes)
+                
+                totalMiles += activity.miles
+                yPosition += 20
+            }
+            
+            // Total
+            yPosition += 10
+            context.cgContext.move(to: CGPoint(x: 72, y: yPosition))
+            context.cgContext.addLine(to: CGPoint(x: pageWidth - 72, y: yPosition))
+            context.cgContext.strokePath()
+            yPosition += 15
+            
+            let totalText = "Total Mileage: \(String(format: "%.2f", totalMiles)) miles"
+            let totalAttributes: [NSAttributedString.Key: Any] = [
+                .font: headerFont,
+                .foregroundColor: UIColor.black
+            ]
+            totalText.draw(at: CGPoint(x: 72, y: yPosition), withAttributes: totalAttributes)
+        }
+        
+        // Save to temporary file
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("MileageActivities.pdf")
+        do {
+            try data.write(to: tempURL)
+            pdfURL = tempURL
+            showShareSheet = true
+        } catch {
+            print("Failed to save PDF: \(error)")
+        }
+    }
+}
+
+struct ShareSheet: UIViewControllerRepresentable {
+    let activityItems: [Any]
+    let onComplete: () -> Void
+    
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+        controller.completionWithItemsHandler = { _, _, _, _ in
+            onComplete()
+        }
+        return controller
+    }
+    
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 #Preview {
