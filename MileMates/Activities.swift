@@ -176,7 +176,7 @@ struct Activities: View {
                     .font: bodyFont,
                     .foregroundColor: UIColor.black
                 ]
-                let distanceSize = distanceText.size(withAttributes: distanceAttributes)
+                _ = distanceText.size(withAttributes: distanceAttributes)
                 distanceText.draw(at: CGPoint(x: pageWidth - 200, y: yPosition), withAttributes: distanceAttributes)
                 
                 totalMiles += activity.miles

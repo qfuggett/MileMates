@@ -1,4 +1,4 @@
-import CoreLocation
+internal import CoreLocation
 import Combine
 
 class LocationTracker: NSObject, ObservableObject, CLLocationManagerDelegate {

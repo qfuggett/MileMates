@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftUIGIF
 import SwiftData
+internal import CoreLocation
 
 struct Welcome: View {
     @StateObject private var locationTracker = LocationTracker()
@@ -84,11 +85,6 @@ struct Welcome: View {
                     .border(Color.white, width: 2)
                     .frame(width: 200, height: 60)
                     .offset(y:-40)
-                Image("stopLines")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 75, height: 75)
-                    .offset(y: 250)
                 Text("Last Trip: \(String(format: "%.2f", displayDistance)) miles")
                     .font(.system(size: 20, weight: .semibold))
                     .offset(y: -40)

@@ -33,9 +33,22 @@
 		D70770B72EE860E900F1DC1C /* MileMatesUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MileMatesUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		E77CA0B62F05E7550094F9E8 /* Exceptions for "MileMates" folder in "MileMates" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = D707709A2EE860E800F1DC1C /* MileMates */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		D707709D2EE860E800F1DC1C /* MileMates */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E77CA0B62F05E7550094F9E8 /* Exceptions for "MileMates" folder in "MileMates" target */,
+			);
 			path = MileMates;
 			sourceTree = "<group>";
 		};
@@ -406,14 +419,15 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MileMates/Info.plist;
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "MileMates needs your location to track mileage even when the app is in the background.";
+				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "MileMates needs your location to track mileage even when the app is in the background.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "MileMates needs your location to track mileage for business trips.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "MileMates needs your location to track mileage for business trips.";
-				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "MileMates needs your location to track mileage even when the app is in the background.";
-				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "MileMates needs your location to track mileage even when the app is in the background.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -440,14 +454,15 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MileMates/Info.plist;
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "MileMates needs your location to track mileage even when the app is in the background.";
+				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "MileMates needs your location to track mileage even when the app is in the background.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "MileMates needs your location to track mileage for business trips.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "MileMates needs your location to track mileage for business trips.";
-				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "MileMates needs your location to track mileage even when the app is in the background.";
-				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "MileMates needs your location to track mileage even when the app is in the background.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
