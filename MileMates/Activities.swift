@@ -11,8 +11,8 @@ import SwiftUIGIF
 import PDFKit
 
 struct Activities: View {
+    @StateObject private var themeManager = ThemeManager()
     @State private var imageData: Data? = nil
-    @State private var isDone = false
     @State private var showSuccessAlert = false
     @State private var showShareSheet = false
     @State private var navigateToTips = false
@@ -22,49 +22,81 @@ struct Activities: View {
 
     var body: some View {
         ZStack {
-            if let data = imageData {
+            // Background - GIF theme or system background
+            if themeManager.shouldShowGIF, let data = imageData, !data.isEmpty {
                 GIFImage(data: data)
                     .ignoresSafeArea()
             } else {
-                Color.black.ignoresSafeArea()
+                Color(.systemBackground)
+                    .ignoresSafeArea()
             }
-            List {
-                ForEach(activities) { activity in
-                    HStack {
-                        Text(activity.name)
-                        Spacer()
-                        Text("\(activity.miles, specifier: "%.2f") mi")
-                            .foregroundStyle(.secondary)
+            
+            VStack(spacing: 0) {
+                List {
+                    ForEach(activities) { activity in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(activity.name)
+                                    .font(.body)
+                                Text(activity.date, style: .date)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Text("\(activity.miles, specifier: "%.2f") mi")
+                                .font(.headline)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+                .scrollContentBackground(themeManager.shouldShowGIF ? .hidden : .automatic)
+                .background(themeManager.shouldShowGIF ? Color.clear : Color(.systemGroupedBackground))
+                
+                // Send All button
+                VStack {
+                    Button(action: {
+                        generateAndSharePDF()
+                    }) {
+                        Label("Send All", systemImage: "paperplane.fill")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.accentColor)
+                            .foregroundColor(.white)
+                            .clipShape(Capsule())
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
+                    .padding(.bottom, 34)
+                }
+                .background {
+                    if themeManager.shouldShowGIF {
+                        Color.clear
+                    } else {
+                        Color(.systemGroupedBackground)
                     }
                 }
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .background(Color.clear)
-            .navigationTitle("All Activities")
-
-            VStack {
-                Spacer()
-
-                Button(action: {
-                    generateAndSharePDF()
-                }) {
-                    Label("Send All", systemImage: "paperplane")
-                        .font(.system(size: 18, weight: .semibold))
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .clipShape(Capsule())
-                }
-                .padding(.bottom, 33)
-            }
         }
+        .navigationTitle("All Activities")
+        .navigationBarTitleDisplayMode(.large)
         .onAppear {
-            if imageData == nil {
+            // Load GIF only if theme is enabled
+            if themeManager.shouldShowGIF && imageData == nil {
                 if let gifData = NSDataAsset(name: "poleposition")?.data {
                     imageData = gifData
                 }
+            }
+        }
+        .onChange(of: themeManager.shouldShowGIF) { _, shouldShow in
+            // Load or unload GIF based on theme preference
+            if shouldShow && imageData == nil {
+                if let gifData = NSDataAsset(name: "poleposition")?.data {
+                    imageData = gifData
+                }
+            } else if !shouldShow {
+                imageData = nil
             }
         }
         .sheet(isPresented: $showShareSheet, onDismiss: {

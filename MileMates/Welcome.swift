@@ -12,6 +12,7 @@ internal import CoreLocation
 
 struct Welcome: View {
     @StateObject private var locationTracker = LocationTracker()
+    @StateObject private var themeManager = ThemeManager()
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Activity.date, order: .reverse) private var activities: [Activity]
     
@@ -35,64 +36,102 @@ struct Welcome: View {
 
     var body: some View {
         NavigationStack {
-            ZStack{
-                if let data = imageData, !data.isEmpty {
+            ZStack {
+                // Background - GIF theme or system background
+                if themeManager.shouldShowGIF, let data = imageData, !data.isEmpty {
                     GIFImage(data: data)
-                        .id(data.hashValue) // Force re-render when data exists
+                        .id(data.hashValue)
                         .ignoresSafeArea()
                 } else {
-                    Color.black.ignoresSafeArea()
+                    Color(.systemBackground)
+                        .ignoresSafeArea()
                 }
-                HStack{
-                    Button{
-                        handleStartButton()
-                    }label: {
-                        Image("start")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 150, height: 150)
-                            .offset(x: -20, y: -250)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(locationTracker.isTracking)
-                    Button{
-                        handleStopButton()
-                    }label: {
-                        Image("stop")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 150, height: 150)
-                            .offset(x: 20, y: -250)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(!locationTracker.isTracking)
-                }
-                Rectangle()
-                    .border(Color.white, width: 2)
-                    .frame(width: 200, height: 60)
-                    .offset(y:-40)
-                Text("Last Trip: \(String(format: "%.2f", displayDistance)) miles")
-                    .font(.system(size: 20, weight: .semibold))
-                    .offset(y: -40)
-                    .foregroundStyle(Color.white)
-                VStack {
+                
+                VStack(spacing: 0) {
                     Spacer()
-
-                    NavigationLink(destination: Activities()) {
-                        Label("All Activities", systemImage: "list.bullet")
-                            .font(.system(size: 18, weight: .semibold))
-                            .padding(.horizontal, 32)
-                            .padding(.vertical, 12)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .clipShape(Capsule())
+                    
+                    // Start/Stop buttons
+                    HStack(spacing: 20) {
+                        Button {
+                            handleStartButton()
+                        } label: {
+                            Image("start")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 120, height: 120)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(locationTracker.isTracking)
+                        .accessibilityLabel("Start tracking")
+                        
+                        Button {
+                            handleStopButton()
+                        } label: {
+                            Image("stop")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 120, height: 120)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(!locationTracker.isTracking)
+                        .accessibilityLabel("Stop tracking")
                     }
-                    .padding(.bottom, 33)
+                    .padding(.top, 40)
+                    
+                    Spacer()
+                    
+                    // Last Trip display
+                    VStack(spacing: 8) {
+                        Text("Last Trip")
+                            .font(.headline)
+                            .foregroundStyle(.secondary)
+                        Text("\(String(format: "%.2f", displayDistance)) miles")
+                            .font(.title)
+                            .fontWeight(.semibold)
+                    }
+                    .padding()
+                    .frame(maxWidth: 200)
+                    .background {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(.ultraThinMaterial)
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .strokeBorder(.quaternary, lineWidth: 1)
+                            }
+                    }
+                    .padding(.vertical, 20)
+                    
+                    Spacer()
+                    
+                    // Bottom navigation buttons
+                    HStack(spacing: 16) {
+                        NavigationLink(destination: Activities()) {
+                            Label("All Activities", systemImage: "list.bullet")
+                                .font(.headline)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(Color.accentColor)
+                                .foregroundColor(.white)
+                                .clipShape(Capsule())
+                        }
+                        
+                        NavigationLink(destination: Profile()) {
+                            Label("Profile", systemImage: "person.circle")
+                                .font(.headline)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(Color(.secondarySystemBackground))
+                                .foregroundColor(.primary)
+                                .clipShape(Capsule())
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 34)
                 }
             }
             .onAppear {
-                // Load GIF if not already loaded
-                if imageData == nil {
+                // Load GIF only if theme is enabled
+                if themeManager.shouldShowGIF && imageData == nil {
                     if let gifData = NSDataAsset(name: "poleposition")?.data {
                         imageData = gifData
                     }
@@ -100,6 +139,16 @@ struct Welcome: View {
                 // Update last trip distance from most recent activity
                 if let lastActivity = activities.first {
                     lastTripDistance = lastActivity.miles
+                }
+            }
+            .onChange(of: themeManager.shouldShowGIF) { _, shouldShow in
+                // Load or unload GIF based on theme preference
+                if shouldShow && imageData == nil {
+                    if let gifData = NSDataAsset(name: "poleposition")?.data {
+                        imageData = gifData
+                    }
+                } else if !shouldShow {
+                    imageData = nil
                 }
             }
             .alert("Enter Activity Name", isPresented: $showActivityNameAlert) {
@@ -124,13 +173,14 @@ struct Welcome: View {
                 Text("Please enable location services in Settings to track your mileage.")
             }
             .onChange(of: locationTracker.authorizationStatus) { oldValue, newValue in
-                // When authorization status changes, check if we should show the activity name alert
+                // Handle authorization status changes event-driven
                 if newValue == .authorizedWhenInUse || newValue == .authorizedAlways {
-                    // Only show if we were waiting for authorization
+                    // User granted permission - show activity name prompt
                     if oldValue == .notDetermined {
                         showActivityNameAlert = true
                     }
                 } else if newValue == .denied || newValue == .restricted {
+                    // User denied permission - show Settings alert
                     if oldValue == .notDetermined {
                         showLocationPermissionAlert = true
                     }
@@ -140,34 +190,18 @@ struct Welcome: View {
     }
     
     private func handleStartButton() {
-        // Check location authorization
         let currentStatus = locationTracker.authorizationStatus
         
         if currentStatus == .notDetermined {
-            // Request authorization and wait for the delegate callback
-            locationTracker.requestAuthorization()
-            // The authorization status will be updated via the delegate callback
-            // We'll check it after a short delay to allow the system dialog to appear
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                // Check again after the system might have updated the status
-                if locationTracker.authorizationStatus == .authorizedWhenInUse || locationTracker.authorizationStatus == .authorizedAlways {
-                    showActivityNameAlert = true
-                } else if locationTracker.authorizationStatus == .denied || locationTracker.authorizationStatus == .restricted {
-                    showLocationPermissionAlert = true
-                } else {
-                    // Still not determined, wait a bit more for the system dialog
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                        if locationTracker.authorizationStatus == .authorizedWhenInUse || locationTracker.authorizationStatus == .authorizedAlways {
-                            showActivityNameAlert = true
-                        } else if locationTracker.authorizationStatus == .denied || locationTracker.authorizationStatus == .restricted {
-                            showLocationPermissionAlert = true
-                        }
-                    }
-                }
-            }
+            // Request authorization - system will show dialog
+            // Response will be handled by onChange listener
+            locationTracker.requestWhenInUseAuthorization()
+            return
         } else if currentStatus == .denied || currentStatus == .restricted {
+            // Permission was previously denied - show Settings alert
             showLocationPermissionAlert = true
         } else if currentStatus == .authorizedWhenInUse || currentStatus == .authorizedAlways {
+            // Permission already granted - show activity name prompt
             showActivityNameAlert = true
         }
     }

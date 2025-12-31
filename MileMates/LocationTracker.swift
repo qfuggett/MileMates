@@ -20,8 +20,8 @@ class LocationTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
         authorizationStatus = manager.authorizationStatus
     }
     
-    func requestAuthorization() {
-        manager.requestAlwaysAuthorization()
+    func requestWhenInUseAuthorization() {
+        manager.requestWhenInUseAuthorization()
     }
     
     func startTracking() {

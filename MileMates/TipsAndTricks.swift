@@ -9,81 +9,114 @@ import SwiftUI
 import SwiftUIGIF
 
 struct TipsAndTricks: View {
+    @StateObject private var themeManager = ThemeManager()
     @State private var imageData: Data? = nil
-    @State private var isDone = false
     @State private var currentTip: String = ""
 
     var body: some View {
         NavigationStack {
-            ZStack{
-                VStack {
-                  if let data = imageData {
-                    GIFImage(data: data) {
-                        isDone = true
-                      }
-                      .frame(width: 400)
-                    } else {
-                    Text("Loading...")
-                  }
+            ZStack {
+                // Background - GIF theme or system background
+                if themeManager.shouldShowGIF, let data = imageData, !data.isEmpty {
+                    GIFImage(data: data)
+                        .ignoresSafeArea()
+                } else {
+                    Color(.systemBackground)
+                        .ignoresSafeArea()
                 }
-                .onAppear {
-                    // Load GIF from Asset Catalog
-                    if let gifData = NSDataAsset(name: "poleposition")?.data {
-                        imageData = gifData
+                
+                VStack(spacing: 0) {
+                    // Header area with decorative elements
+                    VStack(spacing: 16) {
+                        HStack {
+                            Image("bigCloud")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 80, height: 80)
+                            Spacer()
+                            Image("smallCloud")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 60, height: 60)
+                        }
+                        .padding(.horizontal, 40)
+                        .padding(.top, 20)
+                        
+                        HStack(spacing: 12) {
+                            Text("Tips")
+                                .font(.largeTitle)
+                                .fontWeight(.bold)
+                            Text("&")
+                                .font(.title2)
+                                .foregroundStyle(.secondary)
+                            Text("Tricks")
+                                .font(.largeTitle)
+                                .fontWeight(.bold)
+                            Image(systemName: "info.circle.fill")
+                                .font(.title2)
+                                .foregroundStyle(.secondary)
+                        }
                     }
-                    // Load today's tip
-                    currentTip = TipsData.getTipForToday()
-                }
-                Image("bigCloud")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 150, height: 150)
-                    .offset(x: 20, y:-240)
-                Image("smallCloud")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 150, height: 150)
-                    .offset(x: -150, y:-350)
-                Text("Tips")
-                    .font(.title)
-                    .bold()
-                    .offset(x: -120, y:-305)
-                Text("Tricks")
-                    .font(.title)
-                    .bold()
-                    .offset(x: 20, y:-275)
-                Image(systemName: "info.circle")
-                    .foregroundStyle(.white)
-                    .offset(x: 170, y:-320)
-                ZStack {
-                    VStack{
-                        Rectangle()
-                            .frame(width: 300, height: 150)
-                            .foregroundColor(Color.white.opacity(0.9))
-                    }
-                    Text(currentTip.isEmpty ? "Loading tip..." : currentTip)
-                        .font(.system(size: 16))
-                        .bold()
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.black)
-                        .padding(.horizontal, 20)
-                        .frame(width: 300)
-                        .offset(y: 0)
-                }
-                .offset(y: -80)
-                VStack {
+                    .padding(.bottom, 40)
+                    
                     Spacer()
-
+                    
+                    // Tip card
+                    VStack(spacing: 12) {
+                        Text("Did you know?")
+                            .font(.headline)
+                            .foregroundStyle(.secondary)
+                        Text(currentTip.isEmpty ? "Loading tip..." : currentTip)
+                            .font(.body)
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.primary)
+                    }
+                    .padding(24)
+                    .frame(maxWidth: 320)
+                    .background {
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(.ultraThinMaterial)
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 16)
+                                    .strokeBorder(.quaternary, lineWidth: 1)
+                            }
+                    }
+                    .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
+                    
+                    Spacer()
+                    
+                    // Home button
                     NavigationLink(destination: Welcome()) {
-                        Label("Home", systemImage: "house")
-                            .font(.system(size: 18, weight: .semibold))
-                            .padding(.horizontal, 32)
-                            .padding(.vertical, 12)
-                            .background(Color.blue)
+                        Label("Home", systemImage: "house.fill")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.accentColor)
                             .foregroundColor(.white)
                             .clipShape(Capsule())
                     }
-                    .padding(.bottom, 33)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 34)
+                }
+            }
+            .onAppear {
+                // Load today's tip
+                currentTip = TipsData.getTipForToday()
+                // Load GIF only if theme is enabled
+                if themeManager.shouldShowGIF && imageData == nil {
+                    if let gifData = NSDataAsset(name: "poleposition")?.data {
+                        imageData = gifData
+                    }
+                }
+            }
+            .onChange(of: themeManager.shouldShowGIF) { _, shouldShow in
+                // Load or unload GIF based on theme preference
+                if shouldShow && imageData == nil {
+                    if let gifData = NSDataAsset(name: "poleposition")?.data {
+                        imageData = gifData
+                    }
+                } else if !shouldShow {
+                    imageData = nil
                 }
             }
         }
