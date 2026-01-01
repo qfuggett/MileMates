@@ -6,12 +6,16 @@
 //
 
 import SwiftUI
+import Combine
 
 class ThemeManager: ObservableObject {
-    @AppStorage("animatedGIFThemeEnabled") var animatedGIFThemeEnabled: Bool = false
+    @AppStorage("animatedGIFThemeEnabled") var animatedGIFThemeEnabled: Bool = false {
+        willSet {
+            objectWillChange.send()
+        }
+    }
     
     var shouldShowGIF: Bool {
-        // Respect Reduce Motion accessibility setting
         let reduceMotion = UIAccessibility.isReduceMotionEnabled
         return animatedGIFThemeEnabled && !reduceMotion
     }
