@@ -11,7 +11,7 @@ import SwiftUIGIF
 import PDFKit
 
 struct Activities: View {
-    @StateObject private var themeManager = ThemeManager()
+    @ObservedObject private var themeManager = ThemeManager.shared
     @State private var imageData: Data? = nil
     @State private var showSuccessAlert = false
     @State private var showShareSheet = false
@@ -89,13 +89,13 @@ struct Activities: View {
                 }
             }
         }
-        .onChange(of: themeManager.shouldShowGIF) { _, shouldShow in
+        .onChange(of: themeManager.animatedGIFThemeEnabled) { _, enabled in
             // Load or unload GIF based on theme preference
-            if shouldShow && imageData == nil {
+            if themeManager.shouldShowGIF && imageData == nil {
                 if let gifData = NSDataAsset(name: "poleposition")?.data {
                     imageData = gifData
                 }
-            } else if !shouldShow {
+            } else if !themeManager.shouldShowGIF {
                 imageData = nil
             }
         }
@@ -241,15 +241,11 @@ struct Activities: View {
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("MileageActivities.pdf")
         do {
             try data.write(to: tempURL)
-            DispatchQueue.main.async {
-                self.pdfURL = tempURL
-                self.showShareSheet = true
-            }
+            pdfURL = tempURL
+            showShareSheet = true
         } catch {
             print("Failed to save PDF: \(error)")
-            DispatchQueue.main.async {
-                self.showShareSheet = false
-            }
+            // Don't show the share sheet if PDF generation failed
         }
     }
 }

@@ -9,6 +9,8 @@ import SwiftUI
 import Combine
 
 class ThemeManager: ObservableObject {
+    static let shared = ThemeManager()
+    
     @AppStorage("animatedGIFThemeEnabled") var animatedGIFThemeEnabled: Bool = false {
         willSet {
             objectWillChange.send()
@@ -19,5 +21,7 @@ class ThemeManager: ObservableObject {
         let reduceMotion = UIAccessibility.isReduceMotionEnabled
         return animatedGIFThemeEnabled && !reduceMotion
     }
+    
+    private init() {}
 }
 

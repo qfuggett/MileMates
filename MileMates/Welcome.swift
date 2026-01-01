@@ -12,7 +12,7 @@ internal import CoreLocation
 
 struct Welcome: View {
     @StateObject private var locationTracker = LocationTracker()
-    @StateObject private var themeManager = ThemeManager()
+    @ObservedObject private var themeManager = ThemeManager.shared
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Activity.date, order: .reverse) private var activities: [Activity]
     
@@ -141,13 +141,13 @@ struct Welcome: View {
                     lastTripDistance = lastActivity.miles
                 }
             }
-            .onChange(of: themeManager.shouldShowGIF) { _, shouldShow in
+            .onChange(of: themeManager.animatedGIFThemeEnabled) { _, enabled in
                 // Load or unload GIF based on theme preference
-                if shouldShow && imageData == nil {
+                if themeManager.shouldShowGIF && imageData == nil {
                     if let gifData = NSDataAsset(name: "poleposition")?.data {
                         imageData = gifData
                     }
-                } else if !shouldShow {
+                } else if !themeManager.shouldShowGIF {
                     imageData = nil
                 }
             }
